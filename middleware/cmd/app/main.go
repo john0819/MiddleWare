@@ -8,15 +8,28 @@ import (
 	"go-redis-demo/internal/freecache"
 	"go-redis-demo/internal/pkg/utils"
 	"go-redis-demo/internal/redis"
+	"go-redis-demo/internal/user"
+
+	"github.com/zeromicro/go-zero/zrpc"
 )
 
 func init() {
 	freecache.InitCacheManager()
 }
 
+func StartService() {
+	userConfig := config.ServiceConfigInstance.User
+	user.RunUserService(zrpc.RpcServerConf{
+		ListenOn: fmt.Sprintf("%s:%d", userConfig.Host, userConfig.Port),
+	})
+}
+
 func main() {
 	// 获取redis配置
 	config.LoadConfig("./internal/config")
+
+	// 获取服务配置
+	config.LoadServiceConfig("./etc")
 
 	redisConfig := redis.RedisConfig{
 		Addr:     config.AppConfig.Redis.Addr,
@@ -42,4 +55,5 @@ func main() {
 	}
 	fmt.Println(string(cacheResult))
 
+	StartService()
 }
