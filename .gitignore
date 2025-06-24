@@ -48,3 +48,6 @@ dist/
 # Temporary files
 tmp/
 temp/ 
+
+# deploy
+deploy/
