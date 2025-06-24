@@ -14,6 +14,42 @@ services:
     environment:
       - TZ=Asia/Shanghai
 
+  mysql:
+    image: mysql:8
+    container_name: mysql-server
+    environment:
+      MYSQL_ROOT_PASSWORD: root
+      MYSQL_DATABASE: nacos_config # 挂载nacos数据库
+    ports:
+      - "3306:3306"
+    volumes:
+      - ./nacos_mysql_data:/var/lib/mysql
+      - ./nacos-mysql-1.4.2.sql:/docker-entrypoint-initdb.d/nacos-mysql.sql
+    restart: unless-stopped
+
+  nacos:
+    image: nacos/nacos-server:1.4.2
+    container_name: nacos-server
+    environment:
+      - MODE=standalone
+      - SPRING_DATASOURCE_PLATFORM=mysql
+      - MYSQL_SERVICE_HOST=mysql
+      - MYSQL_SERVICE_PORT=3306
+      - MYSQL_SERVICE_DB_NAME=nacos_config
+      - MYSQL_SERVICE_USER=root
+      - MYSQL_SERVICE_PASSWORD=root
+      - JVM_XMS=512m
+      - JVM_XMX=512m
+      - JVM_XMN=256m
+      - TZ=Asia/Shanghai
+    ports:
+      - "8848:8848"
+    depends_on:
+      - mysql
+    restart: unless-stopped
+
 volumes:
   redis_data:
     driver: local 
+  nacos_mysql_data:
+    driver: local

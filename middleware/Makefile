@@ -41,27 +41,27 @@ test:
 # ==============================================================================
 # Redis Docker 管理 Makefile
 
-.PHONY: start-redis stop-redis restart-redis logs-redis
+.PHONY: start-mw stop-mw restart-mw logs-mw
 
-# 启动 Redis 服务
-start-redis:
-	@echo "🚀 启动 Redis 服务..."
+# 启动中间件服务
+start-mw:
+	@echo "🚀 启动中间件服务..."
 	cd deploy/ && docker-compose up -d
-	@echo "✅ Redis 服务已启动"
+	@echo "✅ 中间件服务已启动"
 
-# 停止 Redis 服务
-stop-redis:
-	@echo "🛑 停止 Redis 服务..."
+# 停止中间件服务
+stop-mw:
+	@echo "🛑 停止中间件服务..."
 	cd deploy/ && docker-compose down
-	@echo "✅ Redis 服务已停止"
+	@echo "✅ 中间件服务已停止"
 
-# 重启 Redis 服务
-restart-redis:
-	@echo "🔄 重启 Redis 服务..."
+# 重启中间件服务
+restart-mw:
+	@echo "🔄 重启中间件服务..."
 	cd deploy/ && docker-compose restart
-	@echo "✅ Redis 服务已重启"
+	@echo "✅ 中间件服务已重启"
 
-# 查看 Redis 日志
-logs-redis:
-	@echo "📝 查看 Redis 日志..."
+# 查看中间件日志
+logs-mw:
+	@echo "📝 查看中间件日志..."
 	cd deploy/ && docker-compose logs -f redis
