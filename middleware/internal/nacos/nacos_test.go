@@ -3,6 +3,7 @@ package nacos
 import (
 	"fmt"
 	"testing"
+	"time"
 
 	"github.com/stretchr/testify/assert"
 )
@@ -60,4 +61,13 @@ func TestNcGetService(t *testing.T) {
 	for _, instance := range serviceInstances {
 		fmt.Println("instance: ", instance.Ip, instance.Port)
 	}
+}
+
+func TestNcListenConfig(t *testing.T) {
+	_, err := NewNacosClient("127.0.0.1", 8848, "")
+	if err != nil {
+		t.Fatalf("Failed to create Nacos client: %v", err)
+	}
+
+	time.Sleep(30 * time.Second)
 }

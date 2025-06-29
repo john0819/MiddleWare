@@ -1,6 +1,7 @@
 package nacos
 
 import (
+	"fmt"
 	"log"
 	"sync"
 
@@ -13,9 +14,15 @@ import (
 
 // nacos - 服务发现 + 配置中心
 
+const (
+	ListenDataId = "john.config"
+	DefaultGroup = "DEFAULT_GROUP"
+)
+
 var (
-	nacosOnce   sync.Once
-	nacosClient NacosInterface
+	nacosOnce          sync.Once
+	nacosClient        NacosInterface
+	nacosConfigContent string
 )
 
 // 服务中心
@@ -38,6 +45,12 @@ type ServiceInstance struct {
 type ConfigCenter interface {
 	PublishConfig(dataId, group, content string) (bool, error)
 	GetConfig(dataId, group string) (string, error)
+	ListenConfig(dataId, group string, onChange func(content string)) error
+}
+
+func OnChange(content string) {
+	fmt.Println("nacos config content: ", content)
+	nacosConfigContent = content
 }
 
 type NacosInterface interface {
@@ -93,6 +106,20 @@ func initNacosClient(serverAddr string, port uint64, namespace string) (*NacosCl
 	}, nil
 }
 
+// safe gorotuine
+// todo: learning safe goroutine
+// recover用来捕获当前goroutine的panic，防止程序崩溃 - 终止panic传播
+func GoSafe(fn func()) {
+	go func() {
+		defer func() {
+			if r := recover(); r != nil {
+				log.Printf("panic: %v", r)
+			}
+		}()
+		fn()
+	}()
+}
+
 func NewNacosClient(serverAddr string, port uint64, namespace string) (NacosInterface, error) {
 	var err error
 	nacosOnce.Do(func() {
@@ -100,6 +127,14 @@ func NewNacosClient(serverAddr string, port uint64, namespace string) (NacosInte
 		if err != nil {
 			log.Fatalf("Failed to initialize Nacos client: %v", err)
 		}
+
+		// 监听配置
+		GoSafe(func() {
+			err := nacosClient.ListenConfig(ListenDataId, DefaultGroup, OnChange)
+			if err != nil {
+				log.Printf("Failed to listen config: %v", err)
+			}
+		})
 	})
 
 	return nacosClient, err
@@ -126,6 +161,16 @@ func (nc *NacosClient) GetConfig(dataId, group string) (string, error) {
 		return "", err
 	}
 	return content, nil
+}
+
+func (nc *NacosClient) ListenConfig(dataId, group string, onChange func(content string)) error {
+	return nc.configClient.ListenConfig(vo.ConfigParam{
+		DataId: dataId,
+		Group:  group,
+		OnChange: func(namespace, group, dataId, data string) {
+			onChange(data)
+		},
+	})
 }
 
 func (nc *NacosClient) RegisterInstance(serviceName string, ip string, port int) (bool, error) {
